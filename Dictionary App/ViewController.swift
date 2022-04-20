@@ -16,21 +16,53 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let k1 = Kelimeler(kelime_id: 1, ingilizce: "Table", turkce: "Masa")
-        let k2 = Kelimeler(kelime_id: 2, ingilizce: "Door", turkce: "Kapı")
-        let k3 = Kelimeler(kelime_id: 3, ingilizce: "Window", turkce: "Pencere")
-
-        kelimeListesi.append(k1)
-        kelimeListesi.append(k2)
-        kelimeListesi.append(k3)
+        veritabaniKopyala()
+        
         
         kelimeTableView.delegate = self
         kelimeTableView.dataSource = self
         searchBar.delegate = self
+        
+        
+        
+        kelimeListesi = Kelimelerdao().tumKisilerAl()
+        
+        
     }
     
+    func veritabaniKopyala(){
+            
+            let bundleYolu = Bundle.main.path(forResource:"sozluk" , ofType: ".sqlite")
+            
+            let hedefYol = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+            
+            let fileManager = FileManager.default
+            
+            let kopyalanacakYer = URL(fileURLWithPath: hedefYol).appendingPathComponent("sozluk.sqlite")
+            
+            if fileManager.fileExists(atPath: kopyalanacakYer.path){
+                
+                print("Veri Tabanı zaten var. kopyalamaya gerek yok")
+                
+            }
+            else{
+                
+                do {
+                    try fileManager.copyItem(atPath: bundleYolu!, toPath: kopyalanacakYer.path)
+                } catch {
+                    print("error")
+                }
+                
+            }
+            
+        }
+    
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let indeks = sender as? Int
         
+        let gidilecekVC = segue.destination as! KelimeDetayViewController
+        
+        gidilecekVC.kelime = kelimeListesi[indeks!]
     }
 
 
@@ -72,5 +104,9 @@ extension ViewController:UISearchBarDelegate{
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         print("Arama Sonucu : \(searchText)")
+        
+        kelimeListesi = Kelimelerdao().aramaYap(ingilizce: searchText)
+        kelimeTableView.reloadData()
+        
     }
 }
